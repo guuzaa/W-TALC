@@ -42,16 +42,11 @@ def getLocMAP(predictions, threshold, annotation_path, args):
     subset = np.load(annotation_path + '/subset.npy', allow_pickle=True)
     subset = np.array([s.decode('utf-8') for s in subset])
 
-    class_list = np.load(annotation_path + '/class_list.npy', allow_pickle=True)
+    class_list = np.load(annotation_path + '/classlist.npy', allow_pickle=True)
     class_list = np.array([c.decode('utf-8') for c in class_list])
 
     duration = np.load(annotation_path + '/duration.npy', allow_pickle=True)
     ambi_list = annotation_path + '/Ambiguous_test.txt'
-
-    # if args.feature_type == 'UNT':
-    #     factor = 10.0 / 4.0
-    # else:
-    #     factor = 25.0 / 16.0
 
     factor = 10.0 / 4.0 if args.feature_type == 'UNT' else 25.0 / 16.0
 
@@ -60,74 +55,44 @@ def getLocMAP(predictions, threshold, annotation_path, args):
     # todo len(ambi_list) == 4 ??
 
     # keep training gt_labels for plotting
-    # gtltr = []
-    # for i, s in enumerate(subset):
-    #     if subset[i] == 'validation' and len(gt_segments[i]) > 0:
-    #         gtltr.append(gt_labels[i])
-    # gtlabelstr = gtltr
     gtlabelstr = [gt_labels[i] for i, s in enumerate(subset) if s == 'validation' and len(gt_segments[i]) > 0]
 
     # Keep only the test subset annotations
-    # gts, gtl, vn, dn = [], [], [], []
-    # for i, s in enumerate(subset):
-    #     if subset[i] == 'test':
-    #         gts.append(gt_segments[i])
-    #         gtl.append(gt_labels[i])
-    #         vn.append(video_name[i])
-    #         dn.append(duration[i, 0])
-    # gt_segments = gts
-    # gt_labels = gtl
-    # video_name = vn
-    # duration = dn
-
     gt_segments = [gt_segments[i] for i, s in enumerate(subset) if s == 'test']
     gt_labels = [gt_labels[i] for i, s in enumerate(subset) if s == 'test']
     video_name = [video_name[i] for i, s in enumerate(subset) if s == 'test']
     duration = [duration[i, 0] for i, s in enumerate(subset) if s == 'test']
 
     # keep ground truth and predictions for instances with temporal annotations
-    gts, gtl, vn, pred, dn = [], [], [], [], []
-    for i, s in enumerate(gt_segments):
-        if len(s):
-            gts.append(gt_segments[i])
-            gtl.append(gt_labels[i])
-            vn.append(video_name[i])
-            pred.append(predictions[i])
-            dn.append(duration[i])
-    gt_segments = gts
-    gt_labels = gtl
-    video_name = vn
-    predictions = pred
+    gt_labels = [gt_labels[i] for i, s in enumerate(gt_segments) if len(s) > 0]
+    video_name = [video_name[i] for i, s in enumerate(gt_segments) if len(s) > 0]
+    predictions = [predictions[i] for i, s in enumerate(gt_segments) if len(s) > 0]
+    gt_segments = [gt_segments[i] for i, s in enumerate(gt_segments) if len(s) > 0]
 
     # which categories have temporal labels ?
-    templabelcategories = sorted(list(set([l for gtl in gt_labels for l in gtl])))
+    temporal_label_categories = sorted(list(set([l for gtl in gt_labels for l in gtl])))
 
-    # the number index for those categories.
-    templabelidx = []
-    for t in templabelcategories:
-        templabelidx.append(str2ind(t, class_list))
+    temporal_label_idx = [str2ind(t, class_list) for t in temporal_label_categories]
 
     # process the predictions such that classes having greater than a certain threshold are detected only
     predictions_mod = []
     c_score = []
     for p in predictions:
-        pp = - p;
-        [pp[:, i].sort() for i in range(np.shape(pp)[1])];
-        pp = -pp
-        c_s = np.mean(pp[:int(np.shape(pp)[0] / 8), :], axis=0)
+        reversed_p = - p
+        [reversed_p[:, i].sort() for i in range(reversed_p.shape[1])]
+        reversed_p = -reversed_p
+        # reversed_p = p[::-1]
+        c_s = np.mean(reversed_p[:reversed_p.shape[0] // 8, :], axis=0)
         ind = c_s > 0.0
         c_score.append(c_s)
         new_pred = np.zeros((np.shape(p)[0], np.shape(p)[1]), dtype='float32')
         predictions_mod.append(p * ind)
-    predictions = predictions_mod
 
-    detection_results = []
-    for i, vn in enumerate(video_name):
-        detection_results.append([])
-        detection_results[i].append(vn)
+    predictions = predictions_mod
+    detection_results = [[vn] for vn in video_name]
 
     ap = []
-    for c in templabelidx:
+    for c in temporal_label_idx:
         segment_predict = []
         # Get list of all predictions for class c
         for i in range(len(predictions)):
@@ -137,6 +102,7 @@ def getLocMAP(predictions, threshold, annotation_path, args):
             vid_pred_diff = [vid_pred[idt] - vid_pred[idt - 1] for idt in range(1, len(vid_pred))]
             s = [idk for idk, item in enumerate(vid_pred_diff) if item == 1]
             e = [idk for idk, item in enumerate(vid_pred_diff) if item == -1]
+
             for j in range(len(s)):
                 aggr_score = np.max(tmp[s[j]:e[j]]) + 0.7 * c_score[i][c]
                 if e[j] - s[j] >= 2:
@@ -193,6 +159,8 @@ def getDetectionMAP(predictions, annotation_path, args):
 
 
 if __name__ == '__main__':
-    labels = np.load('Thumos14-Annotations/videoname.npy', allow_pickle=True)
-    uniuqe = np.unique(labels)
+    class_list = np.load('Thumos14-Annotations/classlist.npy', allow_pickle=True)
+    class_list = [c.decode('utf-8') for c in class_list]
+    res = class_list.index('Basketball')
+
     print()
