@@ -143,5 +143,3 @@ cython_debug/
 dummy.py
 
 *.npy
-
-dummy.py

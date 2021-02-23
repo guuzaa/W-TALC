@@ -1,4 +1,4 @@
-lr: 0.0001
+lr: 0.00001
 batch_size: 10
 model_name: weakloc
 pretrained_ckpt: false
