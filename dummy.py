@@ -1,5 +1,7 @@
 import numpy as np
 import csv
+import torch
+import scipy.io as sio
 
 from detectionMAP import str2ind
 
@@ -43,11 +45,75 @@ def __test():
 
     target = (detection_results == test_detection_results)
 
+    print()
 
 
+def sio_test():
+    test_set = sio.loadmat('test_set_meta.mat')
+    test_video = test_set['test_videos'][0]
+    print()
+
+
+def load_data_test():
+    from video_dataset import Dataset
+    import options
+    args = options.parser.parse_args()
+    dataset = Dataset(args)
+    feature, labels, _ = dataset.load_data(is_training=False)
+    print()
+
+
+def process(feature, length):
+    if len(feature) > length:
+        return random_extract(feature, length)
+    else:
+        return pad(feature, length)
+
+
+def pad(feature, length):
+    if feature.shape[0] <= length:
+        return np.pad(feature, ((0, length - feature.shape[0]), (0, 0)), constant_values=0)
+    else:
+        return feature
+
+
+def random_extract(feature, t_max):
+    r = np.random.randint(len(feature) - t_max)
+    return feature[r:r + t_max]
+
+
+def __test01():
+    load_data_test()
+    print()
+
+
+def __test02():
+    labels = np.array([0., 0., 0., 0., 0., 1., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+                       0., 0.])
+    conf = np.array([4.1769422e-03, 2.0157661e-02, 2.2128965e-01, 1.6265440e-03, 4.1107185e-02,
+                     1.1112966e-02, 8.9212045e-02, 4.0669811e-01, 1.0764504e-02, 1.4308811e-03,
+                     9.1715972e-04, 4.0571796e-04, 9.4124004e-02, 1.6790090e-02, 8.9557515e-03,
+                     1.6055232e-02, 2.2399064e-02, 4.0571159e-03, 2.2122420e-03, 2.6507189e-02])
+    sort_ind = np.argsort(-conf)
+    test_sort_ind = np.argsort(conf)[::-1]
+    tp = labels[sort_ind] == 1
+    fp = labels[sort_ind] != 1
+    n_pos = np.sum(labels)
+
+    fp = np.cumsum(fp, dtype='float32')
+    tp = np.cumsum(tp, dtype='float32')
+
+    prec = tp / (fp + tp)
+    target = prec / 0
 
     print()
 
 
+def __test03():
+    path = 'Thumos14reduced-I3D-JOINTFeatures.npy'
+    target = np.load(path, encoding='bytes', allow_pickle=True)
+    print()
+
+
 if __name__ == '__main__':
-    __test()
+    __test03()

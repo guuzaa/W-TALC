@@ -36,7 +36,7 @@ def getLocMAP(predictions, threshold, annotation_path, args):
     gt_segments = np.load(annotation_path + '/segments.npy', allow_pickle=True)
     gt_labels = np.load(annotation_path + '/labels.npy', allow_pickle=True)
 
-    video_name = np.load(annotation_path + '/video_name.npy', allow_pickle=True)
+    video_name = np.load(annotation_path + '/videoname.npy', allow_pickle=True)
     video_name = np.array([v.decode('utf-8') for v in video_name])
 
     subset = np.load(annotation_path + '/subset.npy', allow_pickle=True)
@@ -81,7 +81,6 @@ def getLocMAP(predictions, threshold, annotation_path, args):
         reversed_p = - p
         [reversed_p[:, i].sort() for i in range(reversed_p.shape[1])]
         reversed_p = -reversed_p
-        # reversed_p = p[::-1]
         c_s = np.mean(reversed_p[:reversed_p.shape[0] // 8, :], axis=0)
         ind = c_s > 0.0
         c_score.append(c_s)
@@ -97,7 +96,8 @@ def getLocMAP(predictions, threshold, annotation_path, args):
         # Get list of all predictions for class c
         for i in range(len(predictions)):
             tmp = smooth(predictions[i][:, c])
-            threshold = np.max(tmp) - (np.max(tmp) - np.min(tmp)) * 0.5
+            # todo why does the line code modify threshold ?
+            # threshold = np.max(tmp) - (np.max(tmp) - np.min(tmp)) * 0.5
             vid_pred = np.concatenate([np.zeros(1), (tmp > threshold).astype('float32'), np.zeros(1)], axis=0)
             vid_pred_diff = [vid_pred[idt] - vid_pred[idt - 1] for idt in range(1, len(vid_pred))]
             s = [idk for idk, item in enumerate(vid_pred_diff) if item == 1]
@@ -157,10 +157,3 @@ def getDetectionMAP(predictions, annotation_path, args):
 
     return dmap_list, iou_list
 
-
-if __name__ == '__main__':
-    class_list = np.load('Thumos14-Annotations/classlist.npy', allow_pickle=True)
-    class_list = [c.decode('utf-8') for c in class_list]
-    res = class_list.index('Basketball')
-
-    print()

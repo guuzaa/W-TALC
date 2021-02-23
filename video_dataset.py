@@ -39,8 +39,8 @@ class Dataset():
             for i in self.trainidx:
                 for label in self.labels[i]:
                     if label == category.decode('utf-8'):
-                        idx.append(i);
-                        break;
+                        idx.append(i)
+                        break
             self.classwiseidx.append(idx)
 
     def load_data(self, n_similar=3, is_training=True):
@@ -69,10 +69,10 @@ class Dataset():
             feat = self.features[self.testidx[self.currenttestidx]]
 
             if self.currenttestidx == len(self.testidx) - 1:
-                done = True;
+                done = True
                 self.currenttestidx = 0
             else:
-                done = False;
+                done = False
                 self.currenttestidx += 1
 
             return np.array(feat), np.array(labs), done
