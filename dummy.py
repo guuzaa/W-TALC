@@ -110,8 +110,7 @@ def __test02():
 
 
 def __test03():
-    path = 'Thumos14reduced-I3D-JOINTFeatures.npy'
-    target = np.load(path, encoding='bytes', allow_pickle=True)
+    print('=' * 10, 'result', '=' * 10)
     print()
 
 

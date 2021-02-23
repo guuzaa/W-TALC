@@ -1,8 +1,6 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-# from torch.autograd import Variable
-# The variable API has been deprecated.
 
 torch.set_default_tensor_type('torch.cuda.FloatTensor')
 
@@ -60,7 +58,7 @@ def CASL(x, element_logits, seq_len, n_similar, labels, device):
     return sim_loss
 
 
-def train(itr, dataset, args, model, optimizer, logger, device):
+def train(itr, dataset, args, model, optimizer, logger, device, verbose=False):
     features, labels = dataset.load_data(n_similar=args.num_similar)
     seq_len = np.sum(np.max(np.abs(features), axis=2) > 0, axis=1)
     features = features[:, :np.max(seq_len), :]
@@ -69,7 +67,6 @@ def train(itr, dataset, args, model, optimizer, logger, device):
     labels = torch.from_numpy(labels).float().to(device)
 
     final_features, element_logits = model(features)
-    # final_features, element_logits = model(Variable(features))
 
     milloss = MILL(element_logits, seq_len, args.batch_size, labels, device)
     casloss = CASL(final_features, element_logits, seq_len, args.num_similar, labels, device)
@@ -80,7 +77,10 @@ def train(itr, dataset, args, model, optimizer, logger, device):
     logger.log_value('casloss', casloss, itr)
     logger.log_value('total_loss', total_loss, itr)
 
-    print('Iteration: %d, Loss: %.3f' % (itr, total_loss.data.cpu().numpy()))
+    if verbose:
+        print('Iteration: %d, Loss: %.3f' % (itr, total_loss.item()))
+    elif itr % 100 == 0:
+        print('Iteration: %d, Loss: %.3f' % (itr, total_loss.item()))
 
     optimizer.zero_grad()
     total_loss.backward()

@@ -1,6 +1,0 @@
-SYSTEM:
-  NUM_GPUS: 2
-  num_workers: test
-TRAIN:
-  HYPERPARAMETER: 0.1
-  SCALES: (1,2)

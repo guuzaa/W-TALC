@@ -148,12 +148,15 @@ def getLocMAP(predictions, threshold, annotation_path, args):
     return 100 * np.mean(ap)
 
 
-def getDetectionMAP(predictions, annotation_path, args):
-    iou_list = [0.1, 0.2, 0.3, 0.4, 0.5]
+def getDetectionMAP(predictions, annotation_path, args, iou_list=None, verbose=False):
+    if iou_list is None:
+        iou_list = [0.1, 0.2, 0.3, 0.4, 0.5]
+
     dmap_list = []
     for iou in iou_list:
-        print('Testing for IoU %f' % iou)
+        if verbose:
+            print('Testing for IoU %f' % iou)
+
         dmap_list.append(getLocMAP(predictions, iou, annotation_path, args))
 
     return dmap_list, iou_list
-

@@ -10,25 +10,25 @@ from detectionMAP import getDetectionMAP as dmAP
 torch.set_default_tensor_type('torch.cuda.FloatTensor')
 
 
-def test(itr, dataset, args, model, logger, device):
+def test(itr, dataset, args, model, logger, device, verbose=False):
     done = False
     instance_logits_stack = []
     element_logits_stack = []
     labels_stack = []
 
     while not done:
-        if dataset.currenttestidx % 100 == 0:
+        if dataset.currenttestidx % 100 == 0 and verbose:
             print('Testing test data point %d of %d' % (dataset.currenttestidx, len(dataset.testidx)))
 
         features, labels, done = dataset.load_data(is_training=False)
         features = torch.from_numpy(features).float().to(device)
-        # labels = torch.from_numpy(labels).float().to(device)
 
         with torch.no_grad():
             _, element_logits = model(features, is_training=False)
 
-        instance_logits = F.softmax(torch.mean(torch.topk(element_logits, k=int(np.ceil(len(features) / 8)), dim=0)[0], dim=0),
-                        dim=0).cpu().data.numpy()
+        instance_logits = F.softmax(
+            torch.mean(torch.topk(element_logits, k=int(np.ceil(len(features) / 8)), dim=0)[0], dim=0),
+            dim=0).cpu().data.numpy()
         element_logits = element_logits.cpu().data.numpy()
 
         instance_logits_stack.append(instance_logits)
@@ -46,14 +46,14 @@ def test(itr, dataset, args, model, logger, device):
             if test_set[i]['background_video'] == 'YES':
                 labels_stack[i, :] = np.zeros_like(labels_stack[i, :])
 
-    # todo something wrong with this line
     cmap = cmAP(instance_logits_stack, labels_stack)
+    print('-' * 16, 'result', '-' * 16)
     print('Classification map %f' % cmap)
-    print('Detection map @ %f = %f' % (iou[0], dmap[0]))
-    print('Detection map @ %f = %f' % (iou[1], dmap[1]))
-    print('Detection map @ %f = %f' % (iou[2], dmap[2]))
-    print('Detection map @ %f = %f' % (iou[3], dmap[3]))
-    print('Detection map @ %f = %f' % (iou[4], dmap[4]))
+
+    for i, j in zip(iou, dmap):
+        print('Detection map @ %f = %f' % (i, j))
+
+    print('-' * 40)
 
     logger.log_value('Test Classification mAP', cmap, itr)
     for item in list(zip(dmap, iou)):

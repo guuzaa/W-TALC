@@ -2,21 +2,23 @@ from yacs.config import CfgNode as CN
 
 _C = CN()
 
-_C.TRAIN = CN()
-_C.TRAIN.lr = 0.0001
-_C.TRAIN.batch_size = 10
-_C.TRAIN.model_name = 'weakloc'
-_C.TRAIN.pretrained_ckpt = None
-_C.TRAIN.feature_size = 2048
-_C.TRAIN.num_class = 20
-_C.TRAIN.dataset_name = 'Thumos14reduced'
-_C.TRAIN.max_seqlen = 750
-_C.TRAIN._lambda = 0.5
-_C.TRAIN.num_similar = 3
-_C.TRAIN.seed = 1
-_C.TRAIN.max_iter = 50000
-_C.feature_type = 'I3D'
+# default type:
+# <class 'float'>, <class 'tuple'>, <class 'str'>, <class 'list'>, <class 'bool'>, <class 'int'>
 
+_C.lr = 0.0001
+_C.batch_size = 10
+_C.model_name = 'weakloc'
+_C.pretrained_ckpt = False
+_C.feature_size = 2048
+_C.num_class = 20
+_C.dataset_name = 'Thumos14reduced'
+_C.max_seqlen = 750
+_C._lambda = 0.5
+_C.num_similar = 3
+_C.seed = 1
+_C.max_iter = 50000
+_C.feature_type = 'I3D'
+_C.print_every = 100
 
 
 def get_cfg_defaults():
@@ -24,3 +26,9 @@ def get_cfg_defaults():
     # Returns a clone so that the defaults will not be altered.
     # This is for the "local variable" use pattern
     return _C.clone()
+
+
+if __name__ == '__main__':
+    node = get_cfg_defaults()
+    node.merge_from_file('experiment.yaml')
+    print(node.dataset_name)
