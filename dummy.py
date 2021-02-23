@@ -54,13 +54,6 @@ def sio_test():
     print()
 
 
-def load_data_test():
-    from video_dataset import Dataset
-    import options
-    args = options.parser.parse_args()
-    dataset = Dataset(args)
-    feature, labels, _ = dataset.load_data(is_training=False)
-    print()
 
 
 def process(feature, length):
