@@ -1,14 +1,14 @@
 lr: 0.0001
 batch_size: 10
 model_name: weakloc
-pretrained_ckpt: true
+pretrained_ckpt: false
 feature_size: 2048
 num_class: 20
 dataset_name: Thumos14reduced
 max_seqlen: 1200
-_lambda: 0.5
+Lambda: 0.5
 num_similar: 3
 seed: 1
 max_iter: 50000
-feature_type: I3D
+feature_type: UNT
 print_every: 100
